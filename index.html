@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Vaceado - Sistema de Calidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 pb-12">
+    <div class="max-w-xl mx-auto bg-white shadow-xl min-h-screen border-x border-slate-200">
+        
+        <div class="p-6 border-b-2 border-blue-600 bg-white sticky top-0 z-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <img src="https://i.ibb.co/FbZ7mPwf/logo.png" alt="Logo" class="h-12 w-auto object-contain">
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">Post Vaceado</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="h-2 w-2 bg-blue-600 rounded-full animate-pulse"></span>
+                        <p class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Sistema de Calidad</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-100 px-3 py-1 rounded-full">
+                <p class="text-[10px] text-slate-600 font-bold" id="fecha-actual"></p>
+            </div>
+        </div>
+
+        <form id="form-inspeccion" class="p-6 space-y-8">
+            <div class="space-y-4">
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Información del Inspector</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Nombre</label>
+                        <input type="text" id="nombre-inspector" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600 transition-all">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase ml-1">Apellido</label>
+                        <input type="text" id="apellido-inspector" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-600 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-900 p-6 rounded-3xl shadow-lg space-y-5">
+                <p class="text-[11px] font-black text-blue-300 uppercase tracking-widest">Localización y Acceso</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-blue-200 uppercase ml-1">Edificio</label>
+                        <input type="text" id="edificio" required class="w-full bg-blue-800/50 border border-blue-400/30 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-blue-400" placeholder="Ej: A-1">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-blue-200 uppercase ml-1">Apartamento</label>
+                        <input type="text" id="apto" required class="w-full bg-blue-800/50 border border-blue-400/30 rounded-xl px-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-blue-400" placeholder="Ej: 202">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-blue-200 uppercase ml-1">Token de Seguridad</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 text-xs"></i>
+                        <input type="password" id="clave-acceso" required class="w-full bg-blue-800/50 border border-blue-400/30 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:ring-2 focus:ring-blue-400" placeholder="Clave de autorización">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Protocolo de Verificación</p>
+                <div id="contenedor-items" class="space-y-6"></div>
+            </div>
+
+            <div class="pt-8 space-y-3">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-paper-plane text-blue-200"></i>
+                    Transmitir Reporte Oficial
+                </button>
+                <button type="button" onclick="descargarPDF()" class="w-full bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                    Generar Copia PDF
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Inicialización con tu Public Key
+        emailjs.init("YgHBFXoQvP8lUlrIK");
+        document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString();
+
+        const MODO_PRUEBA = false; 
+        const MI_CORREO = "aaristy93@gmail.com"; 
+        const CORREOS_OFICIALES = ["aaristy93@gmail.com", "gerencia@obra.com"]; 
+
+        const items = [
+            "Alineación, escuadra vertical, agrandamientos y rebarbas en muros/losas.",
+            "Alineación, plomada y escuadra en habitaciones.",
+            "Alineación, plomada y escuadra en baños y área de lavado.",
+            "Retiro de corbatas y varillas salientes en balcón.",
+            "Retiro de corbatas y varillas salientes en Sala.",
+            "Retiro de corbatas en habitaciones (1, 2 y 3).",
+            "Retiro de corbatas en baños y pasillos.",
+            "Limpieza de cajas eléctricas y ductos de plomería.",
+            "Medidas de boquetes para puertas y ventanas según plano."
+        ];
+
+        const contenedor = document.getElementById('contenedor-items');
+        items.forEach((desc, i) => {
+            contenedor.innerHTML += `
+                <div class="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm space-y-4">
+                    <div class="flex gap-3">
+                        <span class="flex-none w-6 h-6 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-[10px] font-black">${i+1}</span>
+                        <p class="text-slate-700 font-bold text-sm leading-snug">${desc}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <label class="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl cursor-pointer border-2 border-transparent has-[:checked]:border-green-500 has-[:checked]:bg-green-50 transition-all text-[11px] font-bold text-slate-500 uppercase">
+                            <input type="radio" name="p${i}" value="SI" required class="hidden"> Cumple
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl cursor-pointer border-2 border-transparent has-[:checked]:border-red-500 has-[:checked]:bg-red-50 transition-all text-[11px] font-bold text-slate-500 uppercase">
+                            <input type="radio" name="p${i}" value="NO" class="hidden"> No Cumple
+                        </label>
+                    </div>
+                    <div id="extra-${i}" class="hidden space-y-2">
+                        <textarea id="falla-${i}" placeholder="Describa la anomalía..." class="w-full p-4 bg-red-50/50 border border-red-100 rounded-xl text-xs outline-none focus:ring-1 focus:ring-red-400"></textarea>
+                        <textarea id="recom-${i}" placeholder="Sugerencia técnica..." class="w-full p-4 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:ring-1 focus:ring-blue-400"></textarea>
+                    </div>
+                </div>
+            `;
+        });
+
+        contenedor.addEventListener('change', (e) => {
+            if(e.target.type === 'radio') {
+                const idx = e.target.name.substring(1);
+                document.getElementById(`extra-${idx}`).classList.toggle('hidden', e.target.value === 'SI');
+            }
+        });
+
+        document.getElementById('form-inspeccion').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const clavesValidas = ["COMEPSA2026", "OBRA01"]; 
+            if (!clavesValidas.includes(document.getElementById('clave-acceso').value)) {
+                alert("❌ Token de seguridad inválido."); return;
+            }
+
+            let itemsCumplidos = 0;
+            items.forEach((_, i) => {
+                if(document.querySelector(`input[name="p${i}"]:checked`).value === "SI") itemsCumplidos++;
+            });
+            const porcentaje = Math.round((itemsCumplidos / items.length) * 100);
+            const statusIcon = porcentaje >= 90 ? "✅" : (porcentaje >= 70 ? "⚠️" : "🚨");
+
+            const nombreCompleto = `${document.getElementById('nombre-inspector').value} ${document.getElementById('apellido-inspector').value}`;
+            
+            let cuerpoCorreo = `REPORTE DE CALIDAD\nESTADO: ${statusIcon} ${porcentaje}%\nINSPECTOR: ${nombreCompleto}\nUBICACIÓN: Edificio ${document.getElementById('edificio').value} | Apto: ${document.getElementById('apto').value}\n\nDETALLE:\n`;
+
+            items.forEach((d, i) => {
+                const res = document.querySelector(`input[name="p${i}"]:checked`).value;
+                cuerpoCorreo += `${i+1}. ${d}: ${res}\n`;
+                if(res === "NO") {
+                    cuerpoCorreo += `   FALLA: ${document.getElementById(`falla-${i}`).value}\n   ACCIÓN: ${document.getElementById(`recom-${i}`).value}\n`;
+                }
+            });
+
+            const listaDestinatarios = MODO_PRUEBA ? MI_CORREO : CORREOS_OFICIALES.join(", ");
+
+            try {
+                // Usando tu Service ID service_yvek728
+                await emailjs.send("service_yvek728", "template_tr15nma", {
+                    subject_score: `${porcentaje}%`,
+                    from_name: nombreCompleto,
+                    edificio: document.getElementById('edificio').value,
+                    apto: document.getElementById('apto').value,
+                    detalles: cuerpoCorreo,
+                    to_email: listaDestinatarios
+                });
+                alert(`✅ Reporte enviado con éxito (${porcentaje}%)`);
+                location.reload();
+            } catch (error) { 
+                alert("❌ Error al enviar. Revisa la configuración de EmailJS."); 
+                console.error(error);
+            }
+        };
+
+        window.descargarPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Reporte Técnico de Post-Vaceado", 15, 20);
+            doc.text(`Inspector: ${document.getElementById('nombre-inspector').value}`, 15, 30);
+            doc.text(`Ubicación: Edificio ${document.getElementById('edificio').value} - Apto ${document.getElementById('apto').value}`, 15, 40);
+            doc.save("Reporte_Calidad.pdf");
+        };
+    </script>
+</body>
+</html>
